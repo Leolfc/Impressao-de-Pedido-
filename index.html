@@ -91,40 +91,41 @@
 
         #cupomOutput p {
             margin: 3px 0;
-            font-size: 12px;
-            text-align: left;
+            color: #000;
         }
 
         #cupomOutput ul {
-            list-style-type: none;
-            padding: 0;
             margin: 5px 0;
+            padding: 0;
+            color: #000;
         }
 
         #cupomOutput li {
-            margin-bottom: 5px;
-            padding-bottom: 5px;
-            border-bottom: 1px dotted #000;
+            margin: 3px 0;
+            padding: 0;
+            color: #000;
         }
         
         #cupomOutput .obs {
+            margin: 3px 0;
             padding-left: 10px;
             font-style: italic;
-            font-size: 11px;
+            color: #000;
         }
         
         #cupomOutput .adicionais {
+            margin: 3px 0;
             padding-left: 10px;
-            font-size: 11px;
+            color: #000;
         }
 
         #cupomOutput .total {
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
+            margin: 10px 0;
+            padding: 5px 0;
             border-top: 1px dashed #000;
-            padding-top: 5px;
-            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #000;
         }
 
         /* --- Estilos Específicos para a Impressão --- */
@@ -178,51 +179,6 @@
                 opacity: 1 !important;
                 transform: none !important;
             }
-
-            #cupomOutput h2 {
-                font-size: 14px !important;
-                margin: 5px 0 !important;
-                padding: 0 !important;
-                border-bottom: 1px dashed #000 !important;
-            }
-
-            #cupomOutput h3 {
-                font-size: 13px !important;
-                margin: 5px 0 !important;
-                padding: 0 !important;
-                border-bottom: 1px dashed #000 !important;
-            }
-
-            #cupomOutput p {
-                margin: 3px 0 !important;
-                padding: 0 !important;
-            }
-
-            #cupomOutput ul {
-                margin: 5px 0 !important;
-                padding: 0 !important;
-            }
-
-            #cupomOutput li {
-                margin: 3px 0 !important;
-                padding: 0 !important;
-            }
-
-            #cupomOutput .obs {
-                margin: 3px 0 !important;
-                padding: 0 0 0 10px !important;
-            }
-
-            #cupomOutput .adicionais {
-                margin: 3px 0 !important;
-                padding: 0 0 0 10px !important;
-            }
-
-            #cupomOutput .total {
-                margin: 10px 0 !important;
-                padding: 5px 0 !important;
-                border-top: 1px dashed #000 !important;
-            }
         }
     </style>
 </head>
@@ -258,7 +214,7 @@
             
             const linhas = textoPedido.split('\n');
             
-            let htmlFinal = '<div style="color: #000; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact;">';
+            let htmlFinal = '<div style="color: #000; background: #fff;">';
             htmlFinal += '<h2>SPACE BURGUER</h2>';
             htmlFinal += '<h3>COMPROVANTE DE PEDIDO</h3>';
             htmlFinal += '<div style="text-align: center; margin: 5px 0;">------------------------</div>';
@@ -326,7 +282,7 @@
             // Pequeno delay antes de imprimir
             setTimeout(() => {
                 window.print();
-            }, 500);
+            }, 1000);
         }
     </script>
 
