@@ -71,7 +71,6 @@
             line-height: 1.2;
             white-space: pre-wrap;
             color: #000;
-            page-break-inside: avoid;
         }
         
         #cupomOutput h2 {
@@ -167,17 +166,62 @@
                 top: 0 !important;
                 color: #000 !important;
                 background: #fff !important;
-                page-break-inside: avoid !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                transform: none !important;
             }
 
             #cupomOutput * {
                 color: #000 !important;
                 background: #fff !important;
                 visibility: visible !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+
+            #cupomOutput h2 {
+                font-size: 14px !important;
+                margin: 5px 0 !important;
+                padding: 0 !important;
+                border-bottom: 1px dashed #000 !important;
+            }
+
+            #cupomOutput h3 {
+                font-size: 13px !important;
+                margin: 5px 0 !important;
+                padding: 0 !important;
+                border-bottom: 1px dashed #000 !important;
+            }
+
+            #cupomOutput p {
+                margin: 3px 0 !important;
+                padding: 0 !important;
+            }
+
+            #cupomOutput ul {
+                margin: 5px 0 !important;
+                padding: 0 !important;
+            }
+
+            #cupomOutput li {
+                margin: 3px 0 !important;
+                padding: 0 !important;
+            }
+
+            #cupomOutput .obs {
+                margin: 3px 0 !important;
+                padding: 0 0 0 10px !important;
+            }
+
+            #cupomOutput .adicionais {
+                margin: 3px 0 !important;
+                padding: 0 0 0 10px !important;
+            }
+
+            #cupomOutput .total {
+                margin: 10px 0 !important;
+                padding: 5px 0 !important;
+                border-top: 1px dashed #000 !important;
             }
         }
     </style>
@@ -279,19 +323,10 @@
             // Força a atualização do DOM
             outputDiv.offsetHeight;
 
-            // Configurações específicas para o Chrome
-            const printSettings = {
-                silent: false,
-                printBackground: true,
-                deviceWidth: '58mm',
-                marginType: 'none',
-                scale: 1
-            };
-
             // Pequeno delay antes de imprimir
             setTimeout(() => {
                 window.print();
-            }, 1000);
+            }, 500);
         }
     </script>
 
