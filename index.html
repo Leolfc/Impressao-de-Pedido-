@@ -148,7 +148,10 @@
                 padding: 0;
             }
 
-            #cupomOutput {
+            body * {
+                display: none !important;
+            }
+            .so-impressao {
                 display: block !important;
                 width: 58mm !important;
                 max-width: 58mm !important;
@@ -166,8 +169,8 @@
                 opacity: 1 !important;
                 transform: none !important;
             }
-
-            #cupomOutput * {
+            .so-impressao * {
+                display: initial !important;
                 color: #000 !important;
                 background: #fff !important;
                 visibility: visible !important;
@@ -274,9 +277,16 @@
             // Força a atualização do DOM
             outputDiv.offsetHeight;
 
+            // Adiciona a classe de impressão
+            outputDiv.classList.add('so-impressao');
+
             // Pequeno delay antes de imprimir
             setTimeout(() => {
                 window.print();
+                // Remove a classe após a impressão
+                setTimeout(() => {
+                    outputDiv.classList.remove('so-impressao');
+                }, 500);
             }, 1000);
         }
     </script>
