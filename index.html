@@ -142,16 +142,10 @@
                 height: auto;
             }
 
-            .container {
-                width: 58mm;
-                margin: 0;
-                padding: 0;
-            }
-
-            body * {
+            .container > *:not(#cupomOutput) {
                 display: none !important;
             }
-            .so-impressao {
+            #cupomOutput.so-impressao {
                 display: block !important;
                 width: 58mm !important;
                 max-width: 58mm !important;
@@ -169,7 +163,7 @@
                 opacity: 1 !important;
                 transform: none !important;
             }
-            .so-impressao * {
+            #cupomOutput.so-impressao * {
                 display: initial !important;
                 color: #000 !important;
                 background: #fff !important;
@@ -204,14 +198,9 @@
                 return;
             }
 
-            // Limpa o conteúdo anterior
             outputDiv.innerHTML = '';
-            
-            // Mostra o cupom antes de processar o conteúdo
             outputDiv.style.display = 'block';
-            
             const linhas = textoPedido.split('\n');
-            
             let htmlFinal = '<div style="color: #000; background: #fff;">';
             htmlFinal += '<h2>SPACE BURGUER</h2>';
             htmlFinal += '<h3>COMPROVANTE DE PEDIDO</h3>';
@@ -223,67 +212,59 @@
 
             linhas.forEach(linha => {
                 linha = linha.trim();
-
-                // Remove emojis e caracteres especiais
                 linha = linha.replace(/[🍔👤🛵🏠🏘💰💳📝✏➕]/g, '').trim();
 
                 if (linha.includes('Cliente:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Cliente:</strong> ${linha.replace('Cliente:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Cliente:</strong> ${linha.replace('Cliente:', '').trim()}</p>`;
                 } else if (linha.includes('Tipo de Serviço:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Serviço:</strong> ${linha.replace('Tipo de Serviço:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Serviço:</strong> ${linha.replace('Tipo de Serviço:', '').trim()}</p>`;
                 } else if (linha.includes('Endereço:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Endereço:</strong> ${linha.replace('Endereço:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Endereço:</strong> ${linha.replace('Endereço:', '').trim()}</p>`;
                 } else if (linha.includes('Bairro:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Bairro:</strong> ${linha.replace('Bairro:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Bairro:</strong> ${linha.replace('Bairro:', '').trim()}</p>`;
                 } else if (linha.includes('Taxa de Entrega:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Taxa Entrega:</strong> ${linha.replace('Taxa de Entrega:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Taxa Entrega:</strong> ${linha.replace('Taxa de Entrega:', '').trim()}</p>`;
                 } else if (linha.includes('Forma de Pagamento:')) {
-                    htmlFinal += `<p style="color: #000;"><strong>Pagamento:</strong> ${linha.replace('Forma de Pagamento:', '').trim()}</p>`;
+                    htmlFinal += `<p><strong>Pagamento:</strong> ${linha.replace('Forma de Pagamento:', '').trim()}</p>`;
                 } else if (linha.includes('ITENS DO PEDIDO:')) {
-                    htmlFinal += '<h3 style="color: #000;">ITENS</h3><ul style="color: #000;">';
+                    htmlFinal += '<div style="margin: 8px 0 2px 0; border-bottom: 1px dashed #000;"></div>';
+                    htmlFinal += '<h3 style="margin-bottom: 2px;">ITENS</h3><ul style="margin-top: 2px;">';
                     processandoItem = true;
                 } else if (linha.match(/^\d+\./)) {
                     if (itemAtual) {
                         htmlFinal += '</li>';
                     }
                     itemAtual = linha.replace(/^\d+\./, '').trim();
-                    htmlFinal += `<li style="color: #000;"><strong>${itemAtual}</strong>`;
+                    htmlFinal += `<li style="margin-bottom: 4px;"><strong>${itemAtual}</strong>`;
                     processandoAdicionais = false;
                 } else if (linha.includes('Obs:')) {
-                    htmlFinal += `<div class="obs" style="color: #000;">${linha.replace('Obs:', 'Obs:').trim()}</div>`;
+                    htmlFinal += `<div class="obs" style="margin-left: 12px; font-style: italic;">${linha.replace('Obs:', 'Obs:').trim()}</div>`;
                 } else if (linha.includes('Adicionais:')) {
                     processandoAdicionais = true;
-                    htmlFinal += `<div class="adicionais" style="color: #000;"><strong>Adicionais:</strong></div>`;
+                    htmlFinal += `<div class="adicionais" style="margin-left: 12px; margin-top: 2px;"><strong>Adicionais:</strong></div>`;
                 } else if (processandoAdicionais && linha.startsWith('-')) {
-                    htmlFinal += `<div class="adicionais" style="color: #000;">${linha.replace('-', '').trim()}</div>`;
+                    htmlFinal += `<div class="adicionais" style="margin-left: 18px;">${linha.replace('-', '').trim()}</div>`;
                 } else if (linha.includes('TOTAL DO PEDIDO:')) {
                     if (itemAtual) {
                         htmlFinal += '</li>';
                     }
                     htmlFinal += '</ul>';
                     const total = linha.replace('TOTAL DO PEDIDO:', '').trim();
-                    htmlFinal += `<div class="total" style="color: #000;">TOTAL: ${total}</div>`;
+                    htmlFinal += '<div style="margin: 8px 0 2px 0; border-bottom: 1px dashed #000;"></div>';
+                    htmlFinal += `<div class="total" style="font-size: 15px;">TOTAL: <span style="font-weight: bold;">${total}</span></div>`;
                     processandoItem = false;
                 }
             });
 
-            htmlFinal += '<div style="text-align: center; margin: 5px 0; color: #000;">------------------------</div>';
+            htmlFinal += '<div style="text-align: center; margin: 8px 0 2px 0; color: #000;">------------------------</div>';
             htmlFinal += '<div style="text-align: center; font-size: 10px; margin-top: 10px; color: #000;">Obrigado pela preferência!</div>';
             htmlFinal += '</div>';
 
-            // Insere o conteúdo
             outputDiv.innerHTML = htmlFinal;
-
-            // Força a atualização do DOM
             outputDiv.offsetHeight;
-
-            // Adiciona a classe de impressão
             outputDiv.classList.add('so-impressao');
-
-            // Pequeno delay antes de imprimir
             setTimeout(() => {
                 window.print();
-                // Remove a classe após a impressão
                 setTimeout(() => {
                     outputDiv.classList.remove('so-impressao');
                 }, 500);
