@@ -1,0 +1,177 @@
+/* Estilos gerais da página */
+body {
+    font-family: 'Poppins', sans-serif, Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    text-align: center;
+    border-bottom: 2px solid #ff6b01;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: #ff6b01;
+    margin: 0;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.botoes-acao {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#gerarCupomBtn {
+    background-color: #ff6b01;
+}
+
+#gerarCupomBtn:hover {
+    background-color: #e05a00;
+}
+
+#imprimirBtn, #limparBtn {
+    background-color: #3498db;
+}
+
+#imprimirBtn:hover, #limparBtn:hover {
+    background-color: #2980b9;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Estilos do Cupom para Impressão --- */
+#cupom-wrapper {
+    border: 2px dashed #ccc;
+    padding: 15px;
+    margin-top: 20px;
+    background-color: #fff;
+}
+
+.cupom {
+    max-width: 320px; /* Largura similar a de uma impressora térmica */
+    margin: 0 auto;
+    font-family: 'Courier New', Courier, monospace;
+    color: #000;
+    font-size: 14px;
+}
+
+.cupom-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.cupom-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.cupom-header p {
+    margin: 2px 0;
+}
+
+.cupom-secao {
+    border-top: 1px dashed #000;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.cupom-secao h3 {
+    text-align: center;
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+}
+
+.cupom-secao p {
+    margin: 4px 0;
+}
+
+.cupom-secao strong {
+    display: inline-block;
+    min-width: 90px;
+}
+
+.cupom-itens ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cupom-itens li {
+    margin-bottom: 8px;
+}
+
+.cupom-itens .adicionais {
+    padding-left: 15px;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.cupom-total {
+    font-weight: bold;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+/* --- Estilos Específicos para Impressão --- */
+@media print {
+    /* Esconde tudo que não é o cupom */
+    body * {
+        visibility: hidden;
+    }
+
+    /* Mostra apenas o wrapper do cupom e seu conteúdo */
+    #cupom-wrapper, #cupom-wrapper * {
+        visibility: visible;
+    }
+
+    /* Posiciona o cupom no topo da página de impressão */
+    #cupom-wrapper {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+    .cupom {
+        margin: 0;
+    }
+}

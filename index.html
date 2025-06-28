@@ -1,276 +1,35 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impressão de Pedidos - Space Burger</title>
-    <style>
-        /* Estilos gerais da página */
-        body {
-            font-family: 'Courier New', monospace;
-            background-color: #f0f2f5;
-            color: #333;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
-
-        h1, p {
-            text-align: center;
-        }
-
-        /* Área para colar o texto */
-        #pedidoInput {
-            width: 100%;
-            height: 250px;
-            padding: 10px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-
-        /* Botão */
-        #btnGerar {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-            background-color: #007bff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        #btnGerar:hover {
-            background-color: #0056b3;
-        }
-
-        /* --- Estilos do Cupom para Impressão --- */
-        #cupomOutput {
-            background-color: #fff;
-            border: 1px solid #ccc;
-            padding: 10px;
-            width: 100%;
-            max-width: 58mm;
-            margin: 0 auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.2;
-            white-space: pre-wrap;
-            color: #000;
-        }
-        
-        #cupomOutput h2 {
-            font-size: 14px;
-            text-align: center;
-            margin: 5px 0;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 5px;
-        }
-
-        #cupomOutput h3 {
-            font-size: 13px;
-            text-align: center;
-            margin: 5px 0;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 5px;
-        }
-
-        #cupomOutput p {
-            margin: 3px 0;
-            color: #000;
-        }
-
-        #cupomOutput ul {
-            margin: 5px 0;
-            padding: 0;
-            color: #000;
-        }
-
-        #cupomOutput li {
-            margin: 3px 0;
-            padding: 0;
-            color: #000;
-        }
-        
-        #cupomOutput .obs {
-            margin: 3px 0;
-            padding-left: 10px;
-            font-style: italic;
-            color: #000;
-        }
-        
-        #cupomOutput .adicionais {
-            margin: 3px 0;
-            padding-left: 10px;
-            color: #000;
-        }
-
-        #cupomOutput .total {
-            margin: 10px 0;
-            padding: 5px 0;
-            border-top: 1px dashed #000;
-            text-align: center;
-            font-weight: bold;
-            color: #000;
-        }
-
-        /* --- Estilos Específicos para a Impressão --- */
-        @media print {
-            @page {
-                size: 58mm auto;
-                margin: 0;
-            }
-
-            html, body {
-                margin: 0;
-                padding: 0;
-                background: #fff;
-                width: 58mm;
-                height: auto;
-            }
-
-            .container > *:not(#cupomOutput) {
-                display: none !important;
-            }
-            #cupomOutput.so-impressao {
-                display: block !important;
-                width: 58mm !important;
-                max-width: 58mm !important;
-                margin: 0 auto !important;
-                padding: 5px !important;
-                border: none !important;
-                box-shadow: none !important;
-                font-size: 12px !important;
-                position: relative !important;
-                left: 0 !important;
-                top: 0 !important;
-                color: #000 !important;
-                background: #fff !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                transform: none !important;
-            }
-            #cupomOutput.so-impressao * {
-                display: initial !important;
-                color: #000 !important;
-                background: #fff !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                transform: none !important;
-            }
-        }
-    </style>
+    <title>Gerador de Cupom - Space Burguer</title>
+    <link rel="stylesheet" href="cupom.css">
+    <link rel="shortcut icon" href="img/imagemFavicon.png" type="image/x-icon" />
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container">
-        <h1>Gerador de Impressão de Pedidos</h1>
-        <p>Copie a mensagem do pedido do WhatsApp e cole no campo abaixo. Depois, clique em "Gerar Cupom para Impressão".</p>
+        <header>
+            <h1>Gerador de Cupom para Impressão 🚀</h1>
+            <p>Cole a mensagem do pedido do WhatsApp abaixo para formatar a impressão.</p>
+        </header>
 
-        <textarea id="pedidoInput" placeholder="Cole aqui a mensagem completa do pedido..."></textarea>
-
-        <button id="btnGerar" onclick="gerarCupom()">Gerar Cupom para Impressão</button>
-        
-        <div id="cupomOutput"></div>
+        <main>
+            <textarea id="pedidoInput" rows="15" placeholder="Cole aqui a mensagem completa do pedido do WhatsApp..."></textarea>
+            <div class="botoes-acao">
+                <button id="gerarCupomBtn">Gerar Cupom</button>
+                <button id="imprimirBtn" class="hidden">🖨️ Imprimir</button>
+                <button id="limparBtn" class="hidden">Limpar</button>
+            </div>
+            
+            <div id="cupom-wrapper" class="hidden">
+                </div>
+        </main>
     </div>
 
-    <script>
-        // Esta é a função principal que será chamada quando o botão for clicado
-        function gerarCupom() {
-            const textoPedido = document.getElementById('pedidoInput').value;
-            const outputDiv = document.getElementById('cupomOutput');
-            
-            if (textoPedido.trim() === '') {
-                alert('Por favor, cole o texto do pedido primeiro!');
-                return;
-            }
-
-            outputDiv.innerHTML = '';
-            outputDiv.style.display = 'block';
-            const linhas = textoPedido.split('\n');
-            let htmlFinal = '<div style="color: #000; background: #fff;">';
-            htmlFinal += '<h2>SPACE BURGUER</h2>';
-            htmlFinal += '<h3>COMPROVANTE DE PEDIDO</h3>';
-            htmlFinal += '<div style="text-align: center; margin: 5px 0;">------------------------</div>';
-
-            let processandoItem = false;
-            let itemAtual = '';
-            let processandoAdicionais = false;
-
-            linhas.forEach(linha => {
-                linha = linha.trim();
-                linha = linha.replace(/[🍔👤🛵🏠🏘💰💳📝✏➕]/g, '').trim();
-
-                if (linha.includes('Cliente:')) {
-                    htmlFinal += `<p><strong>Cliente:</strong> ${linha.replace('Cliente:', '').trim()}</p>`;
-                } else if (linha.includes('Tipo de Serviço:')) {
-                    htmlFinal += `<p><strong>Serviço:</strong> ${linha.replace('Tipo de Serviço:', '').trim()}</p>`;
-                } else if (linha.includes('Endereço:')) {
-                    htmlFinal += `<p><strong>Endereço:</strong> ${linha.replace('Endereço:', '').trim()}</p>`;
-                } else if (linha.includes('Bairro:')) {
-                    htmlFinal += `<p><strong>Bairro:</strong> ${linha.replace('Bairro:', '').trim()}</p>`;
-                } else if (linha.includes('Taxa de Entrega:')) {
-                    htmlFinal += `<p><strong>Taxa Entrega:</strong> ${linha.replace('Taxa de Entrega:', '').trim()}</p>`;
-                } else if (linha.includes('Forma de Pagamento:')) {
-                    htmlFinal += `<p><strong>Pagamento:</strong> ${linha.replace('Forma de Pagamento:', '').trim()}</p>`;
-                } else if (linha.includes('ITENS DO PEDIDO:')) {
-                    htmlFinal += '<div style="margin: 8px 0 2px 0; border-bottom: 1px dashed #000;"></div>';
-                    htmlFinal += '<h3 style="margin-bottom: 2px;">ITENS</h3><ul style="margin-top: 2px;">';
-                    processandoItem = true;
-                } else if (linha.match(/^\d+\./)) {
-                    if (itemAtual) {
-                        htmlFinal += '</li>';
-                    }
-                    itemAtual = linha.replace(/^\d+\./, '').trim();
-                    htmlFinal += `<li style="margin-bottom: 4px;"><strong>${itemAtual}</strong>`;
-                    processandoAdicionais = false;
-                } else if (linha.includes('Obs:')) {
-                    htmlFinal += `<div class="obs" style="margin-left: 12px; font-style: italic;">${linha.replace('Obs:', 'Obs:').trim()}</div>`;
-                } else if (linha.includes('Adicionais:')) {
-                    processandoAdicionais = true;
-                    htmlFinal += `<div class="adicionais" style="margin-left: 12px; margin-top: 2px;"><strong>Adicionais:</strong></div>`;
-                } else if (processandoAdicionais && linha.startsWith('-')) {
-                    htmlFinal += `<div class="adicionais" style="margin-left: 18px;">${linha.replace('-', '').trim()}</div>`;
-                } else if (linha.includes('TOTAL DO PEDIDO:')) {
-                    if (itemAtual) {
-                        htmlFinal += '</li>';
-                    }
-                    htmlFinal += '</ul>';
-                    const total = linha.replace('TOTAL DO PEDIDO:', '').trim();
-                    htmlFinal += '<div style="margin: 8px 0 2px 0; border-bottom: 1px dashed #000;"></div>';
-                    htmlFinal += `<div class="total" style="font-size: 15px;">TOTAL: <span style="font-weight: bold;">${total}</span></div>`;
-                    processandoItem = false;
-                }
-            });
-
-            htmlFinal += '<div style="text-align: center; margin: 8px 0 2px 0; color: #000;">------------------------</div>';
-            htmlFinal += '<div style="text-align: center; font-size: 10px; margin-top: 10px; color: #000;">Obrigado pela preferência!</div>';
-            htmlFinal += '</div>';
-
-            outputDiv.innerHTML = htmlFinal;
-            outputDiv.offsetHeight;
-            outputDiv.classList.add('so-impressao');
-            setTimeout(() => {
-                window.print();
-                setTimeout(() => {
-                    outputDiv.classList.remove('so-impressao');
-                }, 500);
-            }, 1000);
-        }
-    </script>
+    <script src="cupom.js"></script>
 
 </body>
 </html>
