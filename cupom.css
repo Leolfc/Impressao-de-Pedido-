@@ -1,0 +1,251 @@
+/* Estilos específicos para o cupom */
+#cupom-wrapper {
+  border: 2px dashed #ccc;
+  padding: 15px;
+  margin-top: 20px;
+  background-color: #fdfdfd;
+  border-radius: 8px;
+}
+
+.cupom {
+  max-width: 380px;
+  margin: 0 auto;
+  font-family: "Courier New", Courier, monospace;
+  color: #000;
+  font-size: 14px;
+  line-height: 1.4;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.cupom-header {
+  text-align: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed #000;
+}
+
+.cupom-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #000;
+}
+
+.cupom-header p {
+  margin: 5px 0;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.cupom-secao-linha {
+  border-top: 1px dashed #000;
+  padding: 12px 0;
+  margin: 8px 0;
+}
+
+.cupom-secao-linha p {
+  margin: 6px 0;
+  font-size: 0.95em;
+  color: #000;
+}
+
+.cupom-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  margin: 5px 0;
+}
+
+.cupom-item:last-child {
+  border-bottom: none;
+}
+
+.item-principal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.item-principal .item-nome {
+  text-align: left;
+  flex: 1;
+  padding-left: 8px;
+  font-weight: bold;
+  color: #000;
+}
+
+.item-detalhes {
+  font-size: 0.85em;
+  padding-left: 25px;
+  color: #333;
+  margin: 3px 0;
+  line-height: 1.2;
+}
+
+.item-detalhes strong {
+  color: #000;
+}
+
+.detalhes-adicionais {
+  color: #666;
+  font-style: italic;
+}
+
+.detalhes-obs {
+  color: #444;
+  font-style: italic;
+}
+
+.cupom-footer .footer-linha {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 5px;
+  margin: 2px 0;
+  color: #000;
+}
+
+.cupom-footer .total {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px dashed #000;
+  color: #000;
+}
+
+.agradecimento {
+  text-align: center;
+  font-style: italic;
+  font-size: 0.9em;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #000;
+  color: #333;
+}
+
+/* Estilos específicos para impressão */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #cupom-wrapper,
+  #cupom-wrapper * {
+    visibility: visible !important;
+  }
+
+  #cupom-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    padding: 5px;
+    margin: 0;
+    background: white;
+    border-radius: 0;
+  }
+
+  .cupom {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.1;
+    max-width: none;
+    width: 100%;
+    font-family: "Courier New", monospace;
+    padding: 3px;
+    border-radius: 0;
+  }
+
+  .cupom-header {
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 2px dashed #000;
+  }
+
+  .cupom-header h2 {
+    font-size: 13px;
+    margin-bottom: 3px;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .cupom-header p {
+    font-size: 9px;
+    margin: 1px 0;
+    color: #000;
+  }
+
+  .cupom-secao-linha {
+    padding: 4px 0;
+    margin: 3px 0;
+    border-top: 1px dashed #000;
+  }
+
+  .cupom-secao-linha p {
+    margin: 2px 0;
+    font-size: 9px;
+    line-height: 1.0;
+    color: #000;
+  }
+
+  .cupom-item {
+    padding: 3px 0;
+    margin: 1px 0;
+    border-bottom: 1px dotted #ccc;
+  }
+
+  .cupom-item:last-child {
+    border-bottom: none;
+  }
+
+  .item-principal {
+    margin-bottom: 1px;
+  }
+
+  .item-principal .item-nome {
+    font-size: 9px;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .item-detalhes {
+    font-size: 8px;
+    padding-left: 12px;
+    margin: 1px 0;
+    line-height: 1.0;
+    color: #000;
+  }
+
+  .cupom-footer .footer-linha {
+    padding: 1px 3px;
+    margin: 1px 0;
+    font-size: 9px;
+    line-height: 1.0;
+    color: #000;
+  }
+
+  .cupom-footer .total {
+    font-size: 11px;
+    margin-top: 3px;
+    padding-top: 3px;
+    border-top: 2px dashed #000;
+    font-weight: bold;
+    color: #000;
+  }
+
+  .agradecimento {
+    font-size: 8px;
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed #000;
+    color: #000;
+  }
+}

@@ -1,137 +1,201 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Seleciona os elementos da página que vamos usar
-    const pedidoInput = document.getElementById('pedidoInput');
-    const gerarCupomBtn = document.getElementById('gerarCupomBtn');
-    const imprimirBtn = document.getElementById('imprimirBtn');
-    const limparBtn = document.getElementById('limparBtn');
-    const cupomWrapper = document.getElementById('cupom-wrapper');
+document.addEventListener("DOMContentLoaded", () => {
+  // Seleciona os elementos da página que vamos usar
+  const pedidoInput = document.getElementById("pedidoInput");
+  const gerarCupomBtn = document.getElementById("gerarCupomBtn");
+  const imprimirBtn = document.getElementById("imprimirBtn");
+  const limparBtn = document.getElementById("limparBtn");
+  const cupomWrapper = document.getElementById("cupom-wrapper");
 
-    // Adiciona o evento de clique ao botão "Gerar Cupom"
-    gerarCupomBtn.addEventListener('click', () => {
-        const textoPedido = pedidoInput.value;
-        if (textoPedido.trim() === "") {
-            alert("Por favor, cole a mensagem do pedido no campo de texto.");
-            return;
-        }
-
-        const dadosPedido = parsePedido(textoPedido);
-        renderCupom(dadosPedido);
-
-        // Mostra os botões de imprimir/limpar e a área do cupom
-        imprimirBtn.classList.remove('hidden');
-        limparBtn.classList.remove('hidden');
-        cupomWrapper.classList.remove('hidden');
-    });
-
-    // Adiciona o evento de clique ao botão "Imprimir"
-    imprimirBtn.addEventListener('click', () => {
-        window.print();
-    });
-    
-    // Adiciona o evento de clique ao botão "Limpar"
-    limparBtn.addEventListener('click', () => {
-        pedidoInput.value = '';
-        cupomWrapper.innerHTML = '';
-        imprimirBtn.classList.add('hidden');
-        limparBtn.classList.add('hidden');
-        cupomWrapper.classList.add('hidden');
-    });
-
-    /**
-     * Função que "lê" a mensagem e extrai as informações.
-     * @param {string} texto - A mensagem completa do WhatsApp.
-     * @returns {object} - Um objeto com todos os dados do pedido.
-     */
-    function parsePedido(texto) {
-        const dados = {};
-        
-        // Funções auxiliares para extrair dados usando Regex
-        const extrair = (regex) => (texto.match(regex) || [])[1] || 'N/A';
-        
-        // Extrai os campos principais
-        dados.cliente = extrair(/\* Cliente:\* (.*)/);
-        dados.tipoServico = extrair(/\* Tipo de Serviço:\* (.*)/);
-        // O endereço pode ter múltiplas linhas, então o regex é mais complexo
-        const matchEndereco = texto.match(/\* Endereço:\*([\s\S]*?)\* Bairro/m);
-        dados.endereco = matchEndereco ? matchEndereco[1].trim().replace(/\n/g, '<br>') : 'N/A';
-        dados.bairro = extrair(/\* Bairro:\* (.*)/);
-        dados.taxaEntrega = extrair(/\* Taxa de Entrega:\* (.*)/);
-        dados.formaPagamento = extrair(/\* Forma de Pagamento:\* (.*)/);
-        dados.total = extrair(/\*TOTAL DO PEDIDO: (.*)\*/);
-        dados.observacaoTotal = extrair(/\*TOTAL DO PEDIDO: R\$ \d+\.\d+\* \((.*)\)/);
-
-        // Extrai os itens do pedido
-        const blocoItensMatch = texto.match(/\* ITENS DO PEDIDO:\*([\s\S]*?)----/);
-        if (blocoItensMatch) {
-            const blocoItens = blocoItensMatch[1].trim();
-            // Separa os itens principais que começam com "*Número. "
-            const itensCrus = blocoItens.split(/\n\*(?=\d\.)/);
-            
-            dados.itens = itensCrus.map(itemCru => {
-                const item = {};
-                const linhas = itemCru.replace(/^\*/, '').trim().split('\n');
-                item.nome = linhas[0].trim();
-                
-                // Pega adicionais e observações (linhas que não são o nome)
-                item.detalhes = linhas.slice(1).map(detalhe => detalhe.trim()).filter(d => d);
-                return item;
-            });
-        } else {
-            dados.itens = [];
-        }
-
-        return dados;
+  // Adiciona o evento de clique ao botão "Gerar Cupom"
+  gerarCupomBtn.addEventListener("click", () => {
+    const textoPedido = pedidoInput.value;
+    if (textoPedido.trim() === "") {
+      alert("Por favor, cole a mensagem do pedido no campo de texto.");
+      return;
     }
 
-    /**
-     * Função que cria o HTML do cupom a partir dos dados extraídos.
-     * @param {object} dados - O objeto gerado pela função parsePedido.
-     */
-    function renderCupom(dados) {
-        let itensHtml = '';
-        dados.itens.forEach(item => {
-            let detalhesHtml = '';
-            if (item.detalhes.length > 0) {
-                detalhesHtml = `<div class="adicionais">${item.detalhes.join('<br>')}</div>`;
-            }
-            itensHtml += `<li>${item.nome}${detalhesHtml}</li>`;
-        });
+    const dadosPedido = parsePedido(textoPedido);
+    renderCupom(dadosPedido);
 
-        const cupomHtml = `
+    // Mostra os botões de imprimir/limpar e a área do cupom
+    imprimirBtn.classList.remove("hidden");
+    limparBtn.classList.remove("hidden");
+    cupomWrapper.classList.remove("hidden");
+  });
+
+  // Adiciona o evento de clique ao botão "Imprimir"
+  imprimirBtn.addEventListener("click", () => {
+    window.print();
+  });
+
+  // Adiciona o evento de clique ao botão "Limpar"
+  limparBtn.addEventListener("click", () => {
+    pedidoInput.value = "";
+    cupomWrapper.innerHTML = "";
+    imprimirBtn.classList.add("hidden");
+    limparBtn.classList.add("hidden");
+    cupomWrapper.classList.add("hidden");
+  });
+
+  /**
+   * VERSÃO CORRIGIDA: Função que "lê" a mensagem e extrai as informações.
+   * @param {string} texto - A mensagem completa do WhatsApp.
+   * @returns {object} - Um objeto com todos os dados do pedido.
+   */
+  function parsePedido(texto) {
+    const dados = {};
+    // Regex ajustado com \s* para ser mais flexível com espaços
+    const extrair = (regex) => (texto.match(regex) || [])[1] || null;
+
+    dados.cliente = extrair(/\*\s*Cliente:\*\s*(.*)/);
+    dados.tipoServico = extrair(/\*\s*Tipo de Serviço:\*\s*(.*)/);
+    // O endereço pode ter múltiplas linhas, então o regex é mais complexo
+    const matchEndereco = texto.match(/\*\s*Endereço:\*([\s\S]*?)\*\s*Bairro/m);
+    dados.endereco = matchEndereco
+      ? matchEndereco[1].trim().replace(/\n/g, ", ")
+      : "N/A";
+    dados.bairro = extrair(/\*\s*Bairro:\*\s*(.*)/);
+    dados.taxaEntrega = extrair(/\*\s*Taxa de Entrega:\*\s*(.*)/);
+    dados.formaPagamento = extrair(/\*\s*Forma de Pagamento:\*\s*(.*)/);
+    dados.total = extrair(/\*TOTAL DO PEDIDO:\s*(.*)\*/);
+
+    // Regex do bloco de itens também foi ajustado
+    const blocoItensMatch = texto.match(
+      /\*\s*ITENS DO PEDIDO:\*([\s\S]*?)----/
+    );
+    dados.itens = [];
+
+    if (blocoItensMatch) {
+      const blocoItens = blocoItensMatch[1].trim();
+      const itensCrus = blocoItens
+        .split(/\n\*(?=\d\.)/)
+        .map((item) => item.replace(/^\*/, ""));
+
+      itensCrus.forEach((itemCru) => {
+        const linhas = itemCru.trim().split("\n");
+        if (linhas.length === 0 || linhas[0].trim() === "") return;
+
+        const item = {
+          nome: linhas[0].trim(),
+          adicionais: [],
+          observacoes: [],
+        };
+
+        // Itera pelas linhas de detalhes de cada item
+        for (let i = 1; i < linhas.length; i++) {
+          const linha = linhas[i].trim();
+          if (linha.startsWith("✏️ _Obs:")) {
+            item.observacoes.push(
+              linha.replace("✏️ _Obs:", "").replace(/_/g, "").trim()
+            );
+          } else if (linha.startsWith("-")) {
+            item.adicionais.push(linha.replace("-", "").trim());
+          }
+        }
+        dados.itens.push(item);
+      });
+    }
+    return dados;
+  }
+
+  /**
+   * Função que cria o HTML do cupom para se parecer com a imagem (sem alterações).
+   * @param {object} dados - O objeto gerado pela função parsePedido.
+   */
+  function renderCupom(dados) {
+    // Calcula o subtotal (Total - Taxa de Entrega)
+    const valorTotal = parseFloat(
+      dados.total?.replace("R$", "").replace(",", ".") || 0
+    );
+    const valorTaxa = parseFloat(
+      dados.taxaEntrega?.replace("R$", "").replace(",", ".") || 0
+    );
+    const subtotal = valorTotal - valorTaxa;
+
+    const dataAtual = new Date();
+    const dataFormatada = dataAtual.toLocaleDateString("pt-BR");
+    const horaFormatada = dataAtual.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    let itensHtml = "";
+    dados.itens.forEach((item, index) => {
+      itensHtml += `
+                <div class="cupom-item">
+                    <div class="item-principal">
+                        <span>1x</span>
+                        <span class="item-nome">${item.nome
+                          .replace(/\*\d\.\s/, "")
+                          .replace(/\*/g, "")}</span>
+                    </div>
+            `;
+
+      if (item.adicionais.length > 0) {
+        itensHtml += `<div class="item-detalhes detalhes-adicionais"><strong>+Ad:</strong> ${item.adicionais.join(
+          ", "
+        )}</div>`;
+      }
+
+      if (item.observacoes.length > 0) {
+        itensHtml += `<div class="item-detalhes detalhes-obs"><strong>Obs:</strong> ${item.observacoes.join(
+          ", "
+        )}</div>`;
+      }
+
+      itensHtml += `</div>`;
+    });
+
+    const cupomHtml = `
             <div class="cupom">
                 <div class="cupom-header">
                     <h2>SPACE BURGUER</h2>
-                    <p>CUPOM DE PEDIDO</p>
-                    <p>${new Date().toLocaleString('pt-BR')}</p>
+                    <p>Data: ${dataFormatada} - Hora: ${horaFormatada}</p>
                 </div>
                 
-                <div class="cupom-secao">
-                    <h3>DADOS DO CLIENTE</h3>
-                    <p><strong>Cliente:</strong> ${dados.cliente}</p>
-                    <p><strong>Serviço:</strong> ${dados.tipoServico}</p>
-                    ${dados.tipoServico === 'Entrega' ? `
-                    <p><strong>Endereço:</strong> ${dados.endereco}</p>
-                    <p><strong>Bairro:</strong> ${dados.bairro}</p>
-                    <p><strong>Taxa:</strong> ${dados.taxaEntrega}</p>
-                    ` : ''}
+                <div class="cupom-secao-linha">
+                    <p><strong>CLIENTE:</strong> ${dados.cliente || "N/A"}</p>
+                    <p><strong>Serviço:</strong> ${
+                      dados.tipoServico || "N/A"
+                    }</p>
+                    <p><strong>Endereço:</strong> ${dados.endereco || "N/A"}</p>
+                    <p><strong>Bairro:</strong> ${dados.bairro || "N/A"}</p>
+                    <p><strong>Pag.:</strong> ${
+                      dados.formaPagamento || "N/A"
+                    }</p>
                 </div>
 
-                <div class="cupom-secao cupom-itens">
-                    <h3>ITENS</h3>
-                    <ul>
-                        ${itensHtml}
-                    </ul>
+                <div class="cupom-secao-linha cupom-itens">
+                    ${itensHtml}
                 </div>
 
-                <div class="cupom-secao">
-                    <h3>PAGAMENTO</h3>
-                    <p><strong>Forma:</strong> ${dados.formaPagamento}</p>
-                    <p class="cupom-total">TOTAL: ${dados.total}</p>
-                    <p style="text-align: center; font-size: 0.9em;">(${dados.observacaoTotal})</p>
+                <div class="cupom-secao-linha cupom-footer">
+                    <div class="footer-linha">
+                        <span>Subtotal Itens:</span>
+                        <span>R$ ${subtotal.toFixed(2).replace(".", ",")}</span>
+                    </div>
+                    <div class="footer-linha">
+                        <span>Taxa Entrega:</span>
+                        <span>${
+                          dados.taxaEntrega
+                            ? dados.taxaEntrega.replace("R$", "R$ ")
+                            : "R$ 0,00"
+                        }</span>
+                    </div>
+                    <div class="footer-linha total">
+                        <span>TOTAL:</span>
+                        <span>${
+                          dados.total
+                            ? dados.total.replace("R$", "R$ ")
+                            : "R$ 0,00"
+                        }</span>
+                    </div>
                 </div>
+
+                <p class="agradecimento">Obrigado pela preferência!</p>
             </div>
         `;
 
-        cupomWrapper.innerHTML = cupomHtml;
-    }
+    cupomWrapper.innerHTML = cupomHtml;
+  }
 });
