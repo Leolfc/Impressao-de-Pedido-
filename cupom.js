@@ -19,12 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Mostra os botões de imprimir/limpar e a área do cupom
     imprimirBtn.classList.remove("hidden");
+    imprimirBtn.disabled = false;
     limparBtn.classList.remove("hidden");
     cupomWrapper.classList.remove("hidden");
   });
 
   // Adiciona o evento de clique ao botão "Imprimir"
   imprimirBtn.addEventListener("click", () => {
+    if (imprimirBtn.disabled) {
+      alert("Por favor, gere o cupom antes de imprimir!");
+      return;
+    }
     window.print();
   });
 
@@ -33,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pedidoInput.value = "";
     cupomWrapper.innerHTML = "";
     imprimirBtn.classList.add("hidden");
+    imprimirBtn.disabled = true;
     limparBtn.classList.add("hidden");
     cupomWrapper.classList.add("hidden");
   });
