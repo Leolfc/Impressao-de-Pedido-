@@ -14,8 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const dadosPedido = parsePedido(textoPedido);
-    renderCupom(dadosPedido);
+    // ALTERAÇÃO 1: A variável agora se chama 'resultadoParse' para guardar o objeto completo
+    const resultadoParse = parsePedido(textoPedido);
+
+    console.log("Dados Extraídos:", resultadoParse.dados); 
+
+    // ALTERAÇÃO 2: Passamos os dois resultados para a função de renderizar
+    renderCupom(resultadoParse.dados, resultadoParse.blocoItensEncontrado);
 
     // Mostra os botões de imprimir/limpar e a área do cupom
     imprimirBtn.classList.remove("hidden");
@@ -44,23 +49,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /**
-   * VERSÃO DEFINITIVA: Função que ignora emojis e símbolos.
-   * @param {string} texto - A mensagem completa do WhatsApp.
-   * @returns {object} - Um objeto com todos os dados do pedido.
+   * Função que lê a mensagem e extrai as informações.
    */
   function parsePedido(texto) {
     let textoLimpo = texto.replace(/\r/g, "").trim();
-
     const dados = {};
-    // Regex definitivo: O trecho (?:\S+\s+)? ignora um emoji/símbolo opcional.
     const extrair = (regex) => (textoLimpo.match(regex) || [])[1] || null;
 
-    dados.cliente = extrair(/\*\s*(?:\S+\s+)?Cliente\s*:\s*(.*)/i);
-    dados.tipoServico = extrair(/\*\s*(?:\S+\s+)?Tipo de Serviço\s*:\s*(.*)/i);
-    
+    dados.cliente = extrair(/\*\s*(?:\S+\s+)?Cliente\s*:\*\s*(.*)/i);
+    dados.tipoServico = extrair(/\*\s*(?:\S+\s+)?Tipo de Serviço\s*:\*\s*(.*)/i);
     const matchEndereco = textoLimpo.match(/\*\s*(?:\S+\s+)?Endereço\s*:\s*([\s\S]*?)(?=\n\*\s*(?:\S+\s+)?Bairro|\n\*\s*(?:\S+\s+)?Forma de Pagamento)/mi);
     dados.endereco = matchEndereco ? matchEndereco[1].trim().replace(/\n/g, ", ") : null;
-    
     dados.bairro = extrair(/\*\s*(?:\S+\s+)?Bairro\s*:\*\s*(.*)/i);
     dados.taxaEntrega = extrair(/\*\s*(?:\S+\s+)?Taxa de Entrega\s*:\*\s*(.*)/i);
     dados.formaPagamento = extrair(/\*\s*(?:\S+\s+)?Forma de Pagamento\s*:\*\s*(.*)/i);
@@ -96,14 +95,18 @@ document.addEventListener("DOMContentLoaded", () => {
         dados.itens.push(item);
       });
     }
-    return dados;
+    
+    // ALTERAÇÃO 3: Retornamos um objeto com os dados E a informação se o bloco de itens foi encontrado
+    return {
+        dados: dados,
+        blocoItensEncontrado: blocoItensMatch !== null
+    };
   }
 
   /**
    * Função que cria o HTML do cupom.
-   * @param {object} dados - O objeto gerado pela função parsePedido.
    */
-  function renderCupom(dados) {
+  function renderCupom(dados, blocoItensEncontrado) { // A função agora recebe a informação extra
     const valorTotal = parseFloat(dados.total?.replace("R$", "").replace(",", ".") || 0);
     const valorTaxa = parseFloat(dados.taxaEntrega?.replace("R$", "").replace(",", ".") || 0);
     const subtotal = valorTotal > 0 ? valorTotal - valorTaxa : 0;
@@ -131,7 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       itensHtml += `</div>`;
     });
 
-    if(dados.itens.length === 0 && blocoItensMatch){
+    // A lógica de erro agora usa a variável 'blocoItensEncontrado' que foi recebida corretamente
+    if(dados.itens.length === 0 && blocoItensEncontrado){
         itensHtml = "<p>Não foi possível extrair os itens.</p><p>Verifique a formatação da mensagem.</p>";
     } else if (dados.itens.length === 0){
         itensHtml = "<p>Nenhum item encontrado na mensagem.</p>";
