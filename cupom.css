@@ -1,10 +1,89 @@
-/* Estilos específicos para o cupom */
+/* Estilos gerais da página */
+body {
+  font-family: "Poppins", sans-serif, Arial, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+  text-align: center;
+  border-bottom: 2px solid #ff6b01;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  color: #ff6b01;
+  margin: 0;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.botoes-acao {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#gerarCupomBtn {
+  background-color: #ff6b01;
+}
+
+#gerarCupomBtn:hover {
+  background-color: #e05a00;
+}
+
+#imprimirBtn,
+#limparBtn {
+  background-color: #3498db;
+}
+
+#imprimirBtn:hover,
+#limparBtn:hover {
+  background-color: #2980b9;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- NOVOS ESTILOS DO CUPOM (VERSÃO 2.0) --- */
 #cupom-wrapper {
   border: 2px dashed #ccc;
   padding: 15px;
   margin-top: 20px;
   background-color: #fdfdfd;
-  border-radius: 8px;
 }
 
 .cupom {
@@ -14,49 +93,36 @@
   color: #000;
   font-size: 14px;
   line-height: 1.4;
-  background: white;
-  padding: 10px;
-  border-radius: 4px;
 }
 
 .cupom-header {
   text-align: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px dashed #000;
+  margin-bottom: 10px;
 }
 
 .cupom-header h2 {
-  margin: 0 0 8px 0;
-  font-size: 1.4em;
-  font-weight: bold;
-  color: #000;
+  margin: 0;
+  font-size: 1.3em;
 }
 
 .cupom-header p {
-  margin: 5px 0;
+  margin: 2px 0;
   font-size: 0.9em;
-  color: #333;
 }
 
 .cupom-secao-linha {
   border-top: 1px dashed #000;
-  padding: 12px 0;
-  margin: 8px 0;
+  padding: 8px 0;
 }
 
 .cupom-secao-linha p {
-  margin: 6px 0;
-  font-size: 0.95em;
-  color: #000;
+  margin: 2px 0;
 }
 
 .cupom-item {
-  padding: 8px 0;
+  padding: 5px 0;
   border-bottom: 1px solid #eee;
-  margin: 5px 0;
 }
-
 .cupom-item:last-child {
   border-bottom: none;
 }
@@ -64,72 +130,48 @@
 .item-principal {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 4px;
 }
 
 .item-principal .item-nome {
   text-align: left;
   flex: 1;
   padding-left: 8px;
-  font-weight: bold;
-  color: #000;
 }
 
 .item-detalhes {
-  font-size: 0.85em;
-  padding-left: 25px;
+  font-size: 0.9em;
+  padding-left: 25px; /* Recuo para os detalhes */
   color: #333;
-  margin: 3px 0;
-  line-height: 1.2;
 }
 
 .item-detalhes strong {
   color: #000;
 }
 
-.detalhes-adicionais {
-  color: #666;
-  font-style: italic;
-}
-
-.detalhes-obs {
-  color: #444;
-  font-style: italic;
-}
-
 .cupom-footer .footer-linha {
   display: flex;
   justify-content: space-between;
-  padding: 4px 5px;
-  margin: 2px 0;
-  color: #000;
+  padding: 1px 5px;
 }
 
 .cupom-footer .total {
   font-weight: bold;
-  font-size: 1.2em;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 2px dashed #000;
-  color: #000;
+  font-size: 1.3em;
+  margin-top: 5px;
 }
 
 .agradecimento {
   text-align: center;
   font-style: italic;
   font-size: 0.9em;
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px dashed #000;
-  color: #333;
+  margin-top: 10px;
 }
 
-/* Estilos específicos para impressão */
+/* --- Estilos Específicos para Impressão --- */
 @media print {
   @page {
-    size: 80mm auto;
-    margin: 2mm;
+    size: 50mm auto;
+    margin: 1mm;
   }
 
   body * {
@@ -145,9 +187,9 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 50mm;
     border: none;
-    padding: 5px;
+    padding: 1mm;
     margin: 0;
     background: white;
     border-radius: 0;
@@ -155,50 +197,55 @@
 
   .cupom {
     margin: 0;
-    font-size: 10px;
-    line-height: 1.1;
-    max-width: none;
-    width: 100%;
+    font-size: 8px;
+    line-height: 1;
+    max-width: 48mm;
+    width: 48mm;
     font-family: "Courier New", monospace;
-    padding: 3px;
+    padding: 1mm;
     border-radius: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .cupom-header {
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-    border-bottom: 2px dashed #000;
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px dashed #000;
+    text-align: center;
   }
 
   .cupom-header h2 {
-    font-size: 13px;
-    margin-bottom: 3px;
+    font-size: 10px;
+    margin-bottom: 1mm;
     font-weight: bold;
     color: #000;
+    text-transform: uppercase;
   }
 
   .cupom-header p {
-    font-size: 9px;
-    margin: 1px 0;
+    font-size: 7px;
+    margin: 0.5mm 0;
     color: #000;
   }
 
   .cupom-secao-linha {
-    padding: 4px 0;
-    margin: 3px 0;
+    padding: 1mm 0;
+    margin: 1mm 0;
     border-top: 1px dashed #000;
   }
 
   .cupom-secao-linha p {
-    margin: 2px 0;
-    font-size: 9px;
-    line-height: 1.0;
+    margin: 0.5mm 0;
+    font-size: 7px;
+    line-height: 1;
     color: #000;
+    word-wrap: break-word;
   }
 
   .cupom-item {
-    padding: 3px 0;
-    margin: 1px 0;
+    padding: 1mm 0;
+    margin: 0.5mm 0;
     border-bottom: 1px dotted #ccc;
   }
 
@@ -207,45 +254,72 @@
   }
 
   .item-principal {
-    margin-bottom: 1px;
+    margin-bottom: 0.5mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   }
 
   .item-principal .item-nome {
-    font-size: 9px;
+    font-size: 7px;
     font-weight: bold;
     color: #000;
+    flex: 1;
+    word-wrap: break-word;
+    max-width: 35mm;
   }
 
   .item-detalhes {
-    font-size: 8px;
-    padding-left: 12px;
-    margin: 1px 0;
-    line-height: 1.0;
+    font-size: 6px;
+    padding-left: 2mm;
+    margin: 0.3mm 0;
+    line-height: 1;
+    color: #000;
+    word-wrap: break-word;
+  }
+
+  .item-detalhes strong {
     color: #000;
   }
 
   .cupom-footer .footer-linha {
-    padding: 1px 3px;
-    margin: 1px 0;
-    font-size: 9px;
-    line-height: 1.0;
+    padding: 0.5mm 1mm;
+    margin: 0.3mm 0;
+    font-size: 7px;
+    line-height: 1;
     color: #000;
+    display: flex;
+    justify-content: space-between;
   }
 
   .cupom-footer .total {
-    font-size: 11px;
-    margin-top: 3px;
-    padding-top: 3px;
-    border-top: 2px dashed #000;
+    font-size: 9px;
+    margin-top: 1mm;
+    padding-top: 1mm;
+    border-top: 1px dashed #000;
     font-weight: bold;
     color: #000;
   }
 
   .agradecimento {
-    font-size: 8px;
-    margin-top: 6px;
-    padding-top: 4px;
+    font-size: 6px;
+    margin-top: 2mm;
+    padding-top: 1mm;
     border-top: 1px dashed #000;
     color: #000;
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* Quebra de página controlada */
+  .cupom {
+    page-break-inside: avoid;
+  }
+
+  /* Garantir que o texto não quebre em lugares inadequados */
+  .item-nome,
+  .item-detalhes {
+    hyphens: none;
+    word-break: break-word;
   }
 }
