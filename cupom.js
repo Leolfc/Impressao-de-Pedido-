@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ALTERAÇÃO 1: A variável agora se chama 'resultadoParse' para guardar o objeto completo
     const resultadoParse = parsePedido(textoPedido);
 
-    console.log("Dados Extraídos:", resultadoParse.dados); 
+    console.log("Dados Extraídos:", resultadoParse.dados);
 
     // ALTERAÇÃO 2: Passamos os dois resultados para a função de renderizar
     renderCupom(resultadoParse.dados, resultadoParse.blocoItensEncontrado);
@@ -52,20 +52,38 @@ document.addEventListener("DOMContentLoaded", () => {
    * Função que lê a mensagem e extrai as informações.
    */
   function parsePedido(texto) {
-    let textoLimpo = texto.replace(/\r/g, "").trim();
+    // Normalização extra para evitar problemas de colagem do WhatsApp Web
+    let textoLimpo = texto
+      .replace(/\r/g, "")
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove caracteres invisíveis
+      .replace(/\*\s*/g, "* ") // Garante espaço após asterisco
+      .replace(/\n{2,}/g, "\n") // Remove quebras de linha duplas
+      .replace(/ +/g, " ") // Remove múltiplos espaços
+      .trim();
     const dados = {};
+    // Regex mais tolerante a variações de espaços e asteriscos
     const extrair = (regex) => (textoLimpo.match(regex) || [])[1] || null;
 
-    dados.cliente = extrair(/\*\s*(?:\S+\s+)?Cliente\s*:\*\s*(.*)/i);
-    dados.tipoServico = extrair(/\*\s*(?:\S+\s+)?Tipo de Serviço\s*:\*\s*(.*)/i);
-    const matchEndereco = textoLimpo.match(/\*\s*(?:\S+\s+)?Endereço\s*:\s*([\s\S]*?)(?=\n\*\s*(?:\S+\s+)?Bairro|\n\*\s*(?:\S+\s+)?Forma de Pagamento)/mi);
-    dados.endereco = matchEndereco ? matchEndereco[1].trim().replace(/\n/g, ", ") : null;
-    dados.bairro = extrair(/\*\s*(?:\S+\s+)?Bairro\s*:\*\s*(.*)/i);
-    dados.taxaEntrega = extrair(/\*\s*(?:\S+\s+)?Taxa de Entrega\s*:\*\s*(.*)/i);
-    dados.formaPagamento = extrair(/\*\s*(?:\S+\s+)?Forma de Pagamento\s*:\*\s*(.*)/i);
-    dados.total = extrair(/\*TOTAL DO PEDIDO\s*:\s*(.*)\*/i);
+    dados.cliente = extrair(/\*\s*Cliente\s*:?\s*\*?\s*(.*)/i);
+    dados.tipoServico = extrair(/\*\s*Tipo de Servi[cç]o\s*:?\s*\*?\s*(.*)/i);
+    // Endereço pode ter múltiplas linhas, então pega até o próximo campo conhecido
+    const matchEndereco = textoLimpo.match(
+      /\*\s*Endere[cç]o\s*:?\s*([\s\S]*?)(?=\n\*\s*Bairro|\n\*\s*Forma de Pagamento|\n\*\s*Taxa de Entrega|\n\*\s*TOTAL|$)/im
+    );
+    dados.endereco = matchEndereco
+      ? matchEndereco[1].trim().replace(/\n/g, ", ")
+      : null;
+    dados.bairro = extrair(/\*\s*Bairro\s*:?\s*\*?\s*(.*)/i);
+    dados.taxaEntrega = extrair(/\*\s*Taxa de Entrega\s*:?\s*\*?\s*(.*)/i);
+    dados.formaPagamento = extrair(
+      /\*\s*Forma de Pagamento\s*:?\s*\*?\s*(.*)/i
+    );
+    dados.total = extrair(/\*TOTAL DO PEDIDO\s*:?\s*(.*)\*/i);
 
-    const blocoItensMatch = textoLimpo.match(/\*\s*(?:\S+\s+)?ITENS DO PEDIDO\s*:\*([\s\S]*?)----/i);
+    // Itens do pedido
+    const blocoItensMatch = textoLimpo.match(
+      /\*\s*ITENS DO PEDIDO\s*:?\s*\*?([\s\S]*?)----/i
+    );
     dados.itens = [];
 
     if (blocoItensMatch) {
@@ -86,8 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (let i = 1; i < linhas.length; i++) {
           const linha = linhas[i].trim();
-          if (/✏️\s*_Obs:/.test(linha)) {
-            item.observacoes.push(linha.replace(/✏️\s*_Obs:/, "").replace(/_/g, "").trim());
+          if (/✏️\s*_?Obs:?/i.test(linha)) {
+            item.observacoes.push(
+              linha
+                .replace(/✏️\s*_?Obs:?/i, "")
+                .replace(/_/g, "")
+                .trim()
+            );
           } else if (linha.startsWith("-")) {
             item.adicionais.push(linha.replace("-", "").trim());
           }
@@ -95,20 +118,23 @@ document.addEventListener("DOMContentLoaded", () => {
         dados.itens.push(item);
       });
     }
-    
-    // ALTERAÇÃO 3: Retornamos um objeto com os dados E a informação se o bloco de itens foi encontrado
     return {
-        dados: dados,
-        blocoItensEncontrado: blocoItensMatch !== null
+      dados: dados,
+      blocoItensEncontrado: blocoItensMatch !== null,
     };
   }
 
   /**
    * Função que cria o HTML do cupom.
    */
-  function renderCupom(dados, blocoItensEncontrado) { // A função agora recebe a informação extra
-    const valorTotal = parseFloat(dados.total?.replace("R$", "").replace(",", ".") || 0);
-    const valorTaxa = parseFloat(dados.taxaEntrega?.replace("R$", "").replace(",", ".") || 0);
+  function renderCupom(dados, blocoItensEncontrado) {
+    // A função agora recebe a informação extra
+    const valorTotal = parseFloat(
+      dados.total?.replace("R$", "").replace(",", ".") || 0
+    );
+    const valorTaxa = parseFloat(
+      dados.taxaEntrega?.replace("R$", "").replace(",", ".") || 0
+    );
     const subtotal = valorTotal > 0 ? valorTotal - valorTaxa : 0;
 
     const dataAtual = new Date();
@@ -123,22 +149,29 @@ document.addEventListener("DOMContentLoaded", () => {
       itensHtml += `
         <div class="cupom-item">
             <div class="item-principal">
-                <span class="item-nome">${item.nome.replace(/\d+\.\s*/, "").replace(/\*/g, "")}</span>
+                <span class="item-nome">${item.nome
+                  .replace(/\d+\.\s*/, "")
+                  .replace(/\*/g, "")}</span>
             </div>`;
       if (item.adicionais.length > 0) {
-        itensHtml += `<div class="item-detalhes detalhes-adicionais"><strong>+Ad:</strong> ${item.adicionais.join(", ")}</div>`;
+        itensHtml += `<div class="item-detalhes detalhes-adicionais"><strong>+Ad:</strong> ${item.adicionais.join(
+          ", "
+        )}</div>`;
       }
       if (item.observacoes.length > 0) {
-        itensHtml += `<div class="item-detalhes detalhes-obs"><strong>Obs:</strong> ${item.observacoes.join(", ")}</div>`;
+        itensHtml += `<div class="item-detalhes detalhes-obs"><strong>Obs:</strong> ${item.observacoes.join(
+          ", "
+        )}</div>`;
       }
       itensHtml += `</div>`;
     });
 
     // A lógica de erro agora usa a variável 'blocoItensEncontrado' que foi recebida corretamente
-    if(dados.itens.length === 0 && blocoItensEncontrado){
-        itensHtml = "<p>Não foi possível extrair os itens.</p><p>Verifique a formatação da mensagem.</p>";
-    } else if (dados.itens.length === 0){
-        itensHtml = "<p>Nenhum item encontrado na mensagem.</p>";
+    if (dados.itens.length === 0 && blocoItensEncontrado) {
+      itensHtml =
+        "<p>Não foi possível extrair os itens.</p><p>Verifique a formatação da mensagem.</p>";
+    } else if (dados.itens.length === 0) {
+      itensHtml = "<p>Nenhum item encontrado na mensagem.</p>";
     }
 
     const cupomHtml = `
@@ -167,11 +200,17 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
               <div class="footer-linha">
                   <span>Taxa Entrega:</span>
-                  <span>${dados.taxaEntrega ? dados.taxaEntrega.replace("R$", "R$ ") : "R$ 0,00"}</span>
+                  <span>${
+                    dados.taxaEntrega
+                      ? dados.taxaEntrega.replace("R$", "R$ ")
+                      : "R$ 0,00"
+                  }</span>
               </div>
               <div class="footer-linha total">
                   <span>TOTAL:</span>
-                  <span>${dados.total ? dados.total.replace("R$", "R$ ") : "R$ 0,00"}</span>
+                  <span>${
+                    dados.total ? dados.total.replace("R$", "R$ ") : "R$ 0,00"
+                  }</span>
               </div>
           </div>
           <p class="agradecimento">Obrigado pela preferência!</p>
