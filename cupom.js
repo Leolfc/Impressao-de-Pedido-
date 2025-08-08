@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imprimirBtn = document.getElementById("imprimirBtn");
   const limparBtn = document.getElementById("limparBtn");
   const cupomWrapper = document.getElementById("cupom-wrapper");
+  let ultimoDados = null; // guarda os dados do último pedido gerado para impressão
 
   // Adiciona o evento de clique ao botão "Gerar Cupom"
   gerarCupomBtn.addEventListener("click", () => {
@@ -22,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ALTERAÇÃO 2: Passamos os dois resultados para a função de renderizar
     renderCupom(resultadoParse.dados, resultadoParse.blocoItensEncontrado);
 
+    // guarda para impressão no template 58mm
+    ultimoDados = resultadoParse.dados;
+
     // Mostra os botões de imprimir/limpar e a área do cupom
     imprimirBtn.classList.remove("hidden");
     imprimirBtn.disabled = false;
@@ -35,7 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Por favor, gere o cupom antes de imprimir!");
       return;
     }
-    window.print();
+    if (!ultimoDados) {
+      alert("Não há dados para imprimir. Gere o cupom primeiro.");
+      return;
+    }
+    imprimirComTemplate58mm(ultimoDados);
   });
 
   // Adiciona o evento de clique ao botão "Limpar"
@@ -78,11 +86,11 @@ document.addEventListener("DOMContentLoaded", () => {
     dados.formaPagamento = extrair(
       /\*\s*Forma de Pagamento\s*:?\s*\*?\s*(.*)/i
     );
-    dados.total = extrair(/\*TOTAL DO PEDIDO\s*:?\s*(.*)\*/i);
+    dados.total = extrair(/\*\s*TOTAL DO PEDIDO\s*:?\s*(.*)\*/i);
 
     // Itens do pedido
     const blocoItensMatch = textoLimpo.match(
-      /\*\s*ITENS DO PEDIDO\s*:?\s*\*?([\s\S]*?)----/i
+      /\*\s*ITENS DO PEDIDO\s*:?\s*\*?([\s\S]*?)(?=^-{4,}|^\s*\*?\s*TOTAL)/im
     );
     dados.itens = [];
 
@@ -104,12 +112,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         for (let i = 1; i < linhas.length; i++) {
           const linha = linhas[i].trim();
-          if (/✏️\s*_?Obs:?/i.test(linha)) {
+          const obsRegex =
+            /(?:✏️\s*)?_?\s*(Obs|Observa[cç][aã]o(?:es)?)\s*[:\-]\s*/i;
+          if (obsRegex.test(linha)) {
             item.observacoes.push(
-              linha
-                .replace(/✏️\s*_?Obs:?/i, "")
-                .replace(/_/g, "")
-                .trim()
+              linha.replace(obsRegex, "").replace(/_/g, "").trim()
             );
           } else if (linha.startsWith("-")) {
             item.adicionais.push(linha.replace("-", "").trim());
@@ -129,12 +136,35 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   function renderCupom(dados, blocoItensEncontrado) {
     // A função agora recebe a informação extra
-    const valorTotal = parseFloat(
-      dados.total?.replace("R$", "").replace(",", ".") || 0
-    );
-    const valorTaxa = parseFloat(
-      dados.taxaEntrega?.replace("R$", "").replace(",", ".") || 0
-    );
+    const toFloat = (valorStr) => {
+      if (!valorStr) return 0;
+      let s = String(valorStr)
+        .replace(/[^0-9.,-]/g, "")
+        .trim();
+      if (!s) return 0;
+      const hasComma = s.includes(",");
+      const hasDot = s.includes(".");
+      if (hasComma && hasDot) {
+        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+          // vírgula é decimal
+          s = s.replace(/\./g, "").replace(/,/, ".");
+        } else {
+          // ponto é decimal
+          s = s.replace(/,/g, "");
+        }
+      } else if (hasComma) {
+        // só vírgula presente => vírgula decimal
+        s = s.replace(/\./g, "").replace(/,/, ".");
+      } else {
+        // só ponto ou nenhum
+        s = s.replace(/,/g, "");
+      }
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const valorTotal = toFloat(dados.total);
+    const valorTaxa = toFloat(dados.taxaEntrega);
     const subtotal = valorTotal > 0 ? valorTotal - valorTaxa : 0;
 
     const dataAtual = new Date();
@@ -200,21 +230,164 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
               <div class="footer-linha">
                   <span>Taxa Entrega:</span>
-                  <span>${
-                    dados.taxaEntrega
-                      ? dados.taxaEntrega.replace("R$", "R$ ")
-                      : "R$ 0,00"
-                  }</span>
+                  <span>R$ ${valorTaxa.toFixed(2).replace(".", ",")}</span>
               </div>
               <div class="footer-linha total">
                   <span>TOTAL:</span>
-                  <span>${
-                    dados.total ? dados.total.replace("R$", "R$ ") : "R$ 0,00"
-                  }</span>
+                  <span>R$ ${valorTotal.toFixed(2).replace(".", ",")}</span>
               </div>
           </div>
           <p class="agradecimento">Obrigado pela preferência!</p>
       </div>`;
     cupomWrapper.innerHTML = cupomHtml;
+  }
+
+  /**
+   * Impressão no template 58mm (janela separada) conforme especificação enviada
+   */
+  function imprimirComTemplate58mm(dados) {
+    const toFloat = (valorStr) => {
+      if (!valorStr) return 0;
+      let s = String(valorStr)
+        .replace(/[^0-9.,-]/g, "")
+        .trim();
+      if (!s) return 0;
+      const hasComma = s.includes(",");
+      const hasDot = s.includes(".");
+      if (hasComma && hasDot) {
+        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+          s = s.replace(/\./g, "").replace(/,/, ".");
+        } else {
+          s = s.replace(/,/g, "");
+        }
+      } else if (hasComma) {
+        s = s.replace(/\./g, "").replace(/,/, ".");
+      } else {
+        s = s.replace(/,/g, "");
+      }
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    };
+
+    const formatBRL = (n) => `R$ ${Number(n).toFixed(2).replace(".", ",")}`;
+
+    const valorTotal = toFloat(dados.total);
+    const valorTaxa = toFloat(dados.taxaEntrega);
+    const subtotal = valorTotal > 0 ? valorTotal - valorTaxa : 0;
+
+    const dataAtual = new Date();
+    const dataFormatada = dataAtual.toLocaleDateString("pt-BR");
+    const horaFormatada = dataAtual.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const estilosImpressao = `
+      * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; color: #000 !important; }
+      @page { size: 58mm auto; margin: 1mm 1.5mm; }
+      body { font-size: 7pt; line-height: 1.15; width: 48mm; background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; overflow-wrap: break-word; }
+      .header-impressao { text-align: center; margin-bottom: 2mm; }
+      .header-impressao h1 { margin: 0 0 0.5mm 0; font-size: 9.5pt; font-weight: bold; text-transform: uppercase; }
+      .header-impressao p { margin: 0.2mm 0; font-size: 6.5pt; }
+      .info-pedido { border-top: 0.5px dashed #000; border-bottom: 0.5px dashed #000; padding: 1mm 0; margin-bottom: 2mm; }
+      .info-pedido div { margin-bottom: 0.5mm; font-size: 7pt; }
+      .info-pedido strong { font-weight: bold; }
+      table.itens { width: 100%; border-collapse: collapse; margin-bottom: 2mm; table-layout: fixed; }
+      table.itens th, table.itens td { padding: 0.8mm 0.1mm; text-align: left; vertical-align: top; font-size: 7pt; border-bottom: 0.5px dotted #333; }
+      table.itens th { font-weight: bold; border-bottom: 0.5px solid #000; font-size: 7.5pt; }
+      .col-qtd { width: 8%; text-align: center; }
+      .col-item { width: 42%; padding-right: 0.5mm !important; word-break: break-word; }
+      .col-sub { width: 50%; text-align: right; white-space: nowrap; font-weight: bold; font-size: 7.5pt; }
+      .item-nome-print { font-weight: bold; display: block; font-size: 7.5pt; }
+      .detalhes-item-print { font-size: 6pt; padding-left: 0.5mm; display: block; word-break: break-word; }
+      .detalhes-item-print.obs { font-size: 7pt; font-style: italic; }
+      .detalhes-item-print.obs::before { content: "Obs: "; }
+      .detalhes-item-print.ad::before { content: "+Ad: "; font-style: italic; }
+      .resumo-financeiro { margin-top: 1mm; padding-top: 1mm; border-top: 0.5px dashed #333; }
+      .resumo-financeiro div { display: flex; justify-content: space-between; font-size: 7.5pt; margin-bottom: 0.5mm; }
+      .resumo-financeiro span:last-child { text-align: right; white-space: nowrap; font-weight: bold; }
+      .total-geral { text-align: right; font-size: 9.5pt; font-weight: bold; margin-top: 1mm; padding-top: 1mm; border-top: 0.5px solid #000; }
+      .footer-impressao { text-align: center; font-size: 6.5pt; margin-top: 3mm; border-top: 0.5px dashed #333; padding-top: 1mm; }
+    `;
+
+    const safe = (s) => (s == null || s === "" ? "N/A" : s);
+
+    let html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Pedido Space Burguer</title><style>${estilosImpressao}</style></head><body>`;
+    html += `<div class="header-impressao"><h1>SPACE BURGUER</h1><p>Data: ${dataFormatada} - Hora: ${horaFormatada}</p></div>`;
+    html += `<div class="info-pedido">`;
+    html += `<div><strong>Cliente:</strong> ${safe(dados.cliente)}</div>`;
+    if (dados.tipoServico)
+      html += `<div><strong>Serviço:</strong> ${safe(dados.tipoServico)}</div>`;
+    if (dados.endereco)
+      html += `<div><strong>Endereço:</strong> ${safe(dados.endereco)}</div>`;
+    if (dados.bairro)
+      html += `<div><strong>Bairro:</strong> ${safe(dados.bairro)}</div>`;
+    if (dados.formaPagamento)
+      html += `<div><strong>Pag.:</strong> ${safe(dados.formaPagamento)}</div>`;
+    html += `</div>`;
+
+    html += `<table class="itens"><thead><tr><th class="col-qtd">Qtd</th><th class="col-item">Item/Detalhes</th><th class="col-sub">Valor</th></tr></thead><tbody>`;
+    (dados.itens || []).forEach((item) => {
+      const nomeLimpo = String(item.nome || "")
+        .replace(/\d+\.\s*/, "")
+        .replace(/\*/g, "")
+        .trim();
+      const adicionaisLimpos = (item.adicionais || []).map((ad) =>
+        String(ad)
+          .replace(/\(\+\s*R\$[^)]*\)/gi, "")
+          .trim()
+      );
+      const obsTexto = (item.observacoes || []).join(", ");
+      html += `<tr>`;
+      html += `<td class="col-qtd">1</td>`;
+      html += `<td class="col-item">`;
+      html += `<span class="item-nome-print">${nomeLimpo || "Item"}</span>`;
+      if (adicionaisLimpos.length > 0) {
+        html += `<span class="detalhes-item-print ad">${adicionaisLimpos.join(
+          ", "
+        )}</span>`;
+      }
+      if (obsTexto) {
+        html += `<span class="detalhes-item-print obs">${obsTexto}</span>`;
+      }
+      html += `</td>`;
+      html += `<td class="col-sub">&nbsp;</td>`; // sem valor por item
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+
+    html += `<div class="resumo-financeiro">`;
+    html += `<div><span>Subtotal Itens:</span><span>${formatBRL(
+      subtotal
+    )}</span></div>`;
+    if (valorTaxa > 0) {
+      html += `<div><span>Taxa Entrega:</span><span>${formatBRL(
+        valorTaxa
+      )}</span></div>`;
+    }
+    html += `</div>`;
+
+    html += `<div class="total-geral">TOTAL: ${formatBRL(valorTotal)}</div>`;
+    html += `<div class="footer-impressao">Obrigado pela preferência!</div>`;
+    html += `</body></html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        try {
+          printWindow.print();
+        } catch (e) {
+          console.error("Erro ao tentar imprimir:", e);
+          alert("Erro ao iniciar a impressão. Tente novamente.");
+        }
+      }, 500);
+    } else {
+      alert(
+        "Não foi possível abrir a janela de impressão. Desative o bloqueador de pop-ups para este site."
+      );
+    }
   }
 });
