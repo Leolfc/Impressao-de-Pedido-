@@ -63,16 +63,35 @@ document.addEventListener("DOMContentLoaded", () => {
     // Normalização extra para evitar problemas de colagem do WhatsApp Web
     let textoLimpo = texto
       .replace(/\r/g, "")
-      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove caracteres invisíveis
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove caracteres invisíveis (zero-width)
+      .replace(/\u00A0/g, " ") // space no-break para evitar problemas de cópia do WhatsApp
       .replace(/\*\s*/g, "* ") // Garante espaço após asterisco
       .replace(/\n{2,}/g, "\n") // Remove quebras de linha duplas
       .replace(/ +/g, " ") // Remove múltiplos espaços
       .trim();
     const dados = {};
     // Regex mais tolerante a variações de espaços e asteriscos
-    const extrair = (regex) => (textoLimpo.match(regex) || [])[1] || null;
+    // Função extratora mais tolerante: aceita linhas com ou sem asteriscos e corta em próximas linhas
+    const extrair = (regex) => {
+      const m = textoLimpo.match(regex);
+      if (!m) return null;
+      const v = (m[1] || "").trim();
+      // Limpar placeholders comuns copiados do WhatsApp/Edge
+      if (
+        !v ||
+        /^n\/?n$/i.test(v) ||
+        /^sem\s+/i.test(v) ||
+        /^s\.n\.?$/i.test(v)
+      )
+        return null;
+      return v.replace(/\s+/g, " ");
+    };
 
-    dados.cliente = extrair(/\*\s*Cliente\s*:?\s*\*?\s*(.*)/i);
+    // Tenta várias formas: com asterisco, sem asterisco, e linha iniciando com 'Cliente:'
+    dados.cliente =
+      extrair(
+        /\*?\s*Cliente\s*[:\-]?\s*\*?\s*(.*?)(?=\n\*|\n[A-ZÀ-Ÿa-zçÇ]|$)/i
+      ) || extrair(/(^|\n)Cliente\s*[:\-]?\s*(.*?)(?=\n|$)/i);
     dados.tipoServico = extrair(/\*\s*Tipo de Servi[cç]o\s*:?\s*\*?\s*(.*)/i);
     // Endereço pode ter múltiplas linhas, então pega até o próximo campo conhecido
     const matchEndereco = textoLimpo.match(
@@ -82,11 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ? matchEndereco[1].trim().replace(/\n/g, ", ")
       : null;
     dados.bairro = extrair(/\*\s*Bairro\s*:?\s*\*?\s*(.*)/i);
-    dados.taxaEntrega = extrair(/\*\s*Taxa de Entrega\s*:?\s*\*?\s*(.*)/i);
+    dados.taxaEntrega = extrair(/\*?\s*Taxa de Entrega\s*[:\-]?\s*\*?\s*(.*)/i);
     dados.formaPagamento = extrair(
-      /\*\s*Forma de Pagamento\s*:?\s*\*?\s*(.*)/i
+      /\*?\s*Forma de Pagamento\s*[:\-]?\s*\*?\s*(.*)/i
     );
-    dados.total = extrair(/\*\s*TOTAL DO PEDIDO\s*:?\s*(.*)\*/i);
+    dados.total = extrair(/\*?\s*TOTAL( DO PEDIDO)?\s*[:\-]?\s*(.*)/i);
 
     // Itens do pedido
     const blocoItensMatch = textoLimpo.match(
@@ -125,6 +144,14 @@ document.addEventListener("DOMContentLoaded", () => {
         dados.itens.push(item);
       });
     }
+    // Normalizar campos que contenham 'N/N' ou '---' ou 'SEM' como null
+    Object.keys(dados).forEach((k) => {
+      if (typeof dados[k] === "string") {
+        const v = dados[k].trim();
+        if (/^(-+|n\/?n|sem|s\.n\.?|nao informado)$/i.test(v)) dados[k] = null;
+      }
+    });
+
     return {
       dados: dados,
       blocoItensEncontrado: blocoItensMatch !== null,
