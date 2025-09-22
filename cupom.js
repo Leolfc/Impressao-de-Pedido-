@@ -93,14 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
         /\*?\s*Cliente\s*[:\-]?\s*\*?\s*(.*?)(?=\n\*|\n[A-ZÀ-Ÿa-zçÇ]|$)/i
       ) || extrair(/(^|\n)Cliente\s*[:\-]?\s*(.*?)(?=\n|$)/i);
     dados.tipoServico = extrair(/\*\s*Tipo de Servi[cç]o\s*:?\s*\*?\s*(.*)/i);
-    // Endereço pode ter múltiplas linhas, então pega até o próximo campo conhecido
+    // Endereço pode ter múltiplas linhas; às vezes o número está em linha separada
+    // Captura desde 'Endereço' até 'Numero'|'Bairro'|'Forma de Pagamento'|'Taxa'|'TOTAL' ou próximo campo
     const matchEndereco = textoLimpo.match(
-      /\*\s*Endere[cç]o\s*:?\s*([\s\S]*?)(?=\n\*\s*Bairro|\n\*\s*Forma de Pagamento|\n\*\s*Taxa de Entrega|\n\*\s*TOTAL|$)/im
+      /\*?\s*Endere[cç]o\s*[:\-]?\s*\*?\s*([\s\S]*?)(?=\n\*?\s*(Numero|N[uú]mero|Bairro|Forma de Pagamento|Taxa de Entrega|TOTAL)|$)/im
     );
     dados.endereco = matchEndereco
-      ? matchEndereco[1].trim().replace(/\n/g, ", ")
+      ? matchEndereco[1]
+          .trim()
+          .replace(/\n/g, ", ")
+          .replace(/,+\s*$/, "")
       : null;
-    dados.bairro = extrair(/\*\s*Bairro\s*:?\s*\*?\s*(.*)/i);
+    dados.bairro = extrair(/\*?\s*Bairro\s*[:\-]?\s*\*?\s*(.*)/i);
+    // Numero separado (quando existe uma linha 'Numero: 539')
+    dados.numero = extrair(/\*?\s*(?:Numero|N[uú]mero)\s*[:\-]?\s*\*?\s*(.*)/i);
     dados.taxaEntrega = extrair(/\*?\s*Taxa de Entrega\s*[:\-]?\s*\*?\s*(.*)/i);
     dados.formaPagamento = extrair(
       /\*?\s*Forma de Pagamento\s*[:\-]?\s*\*?\s*(.*)/i
@@ -241,7 +247,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="cupom-secao-linha">
               <p><strong>CLIENTE:</strong> ${dados.cliente || "N/A"}</p>
               <p><strong>Serviço:</strong> ${dados.tipoServico || "N/A"}</p>
-              <p><strong>Endereço:</strong> ${dados.endereco || "N/A"}</p>
+              <p><strong>Endereço:</strong> ${
+                (dados.endereco || "") +
+                  (dados.numero ? ", Nº " + dados.numero : "") || "N/A"
+              }</p>
               <p><strong>Bairro:</strong> ${dados.bairro || "N/A"}</p>
               <p><strong>Pag.:</strong> ${dados.formaPagamento || "N/A"}</p>
           </div>
@@ -343,10 +352,12 @@ document.addEventListener("DOMContentLoaded", () => {
     html += `<div class="header-impressao"><h1>SPACE BURGUER</h1><p>Data: ${dataFormatada} - Hora: ${horaFormatada}</p></div>`;
     html += `<div class="info-pedido">`;
     html += `<div><strong>Cliente:</strong> ${safe(dados.cliente)}</div>`;
+    if (dados.endereco || dados.numero)
+      html += `<div><strong>Endereço:</strong> ${safe(dados.endereco)}${
+        dados.numero ? " Nº " + safe(dados.numero) : ""
+      }</div>`;
     if (dados.tipoServico)
       html += `<div><strong>Serviço:</strong> ${safe(dados.tipoServico)}</div>`;
-    if (dados.endereco)
-      html += `<div><strong>Endereço:</strong> ${safe(dados.endereco)}</div>`;
     if (dados.bairro)
       html += `<div><strong>Bairro:</strong> ${safe(dados.bairro)}</div>`;
     if (dados.formaPagamento)
