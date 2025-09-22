@@ -111,7 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
     dados.formaPagamento = extrair(
       /\*?\s*Forma de Pagamento\s*[:\-]?\s*\*?\s*(.*)/i
     );
-    dados.total = extrair(/\*?\s*TOTAL( DO PEDIDO)?\s*[:\-]?\s*(.*)/i);
+    // Captura apenas o valor após 'TOTAL' ou 'TOTAL DO PEDIDO'
+    dados.total = extrair(/\*?\s*TOTAL(?: DO PEDIDO)?\s*[:\-]?\s*(.*)/i);
 
     // Itens do pedido
     const blocoItensMatch = textoLimpo.match(
