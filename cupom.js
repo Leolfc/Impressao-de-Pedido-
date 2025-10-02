@@ -100,191 +100,234 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         // Se o endereço foi parcialmente capturado, mas próxima linha for número, não anexar aqui
         // Caso contrário, tenta também pegar linhas intermediárias que não sejam campos
-        if (!addr) {
-          // tenta coletar até próximo campo
-          j = i + 1;
-          while (j < lines.length && !isFieldLine(lines[j])) {
-            if (lines[j]) addr = (addr ? addr + ", " : "") + lines[j];
-            j++;
-          }
-        }
-        dados.endereco = addr ? addr.replace(/,\s*,/g, ", ").trim() : null;
-        continue;
-      }
+          // Normalização inicial para reduzir problemas com cópia (whitespace, zero-width, no-break)
+        const DEBUG = localStorage.getItem("DEBUG_PARSE") === "1"; // definir no console: localStorage.setItem('DEBUG_PARSE','1')
+          let textoLimpo = texto
+            .replace(/\r/g, "")
+            .replace(/[\u200B-\u200D\uFEFF]/g, "")
+            .replace(/\u00A0/g, " ")
+            .replace(/\t/g, " ")
+            .replace(/\r\n|\r/g, "\n")
+            .replace(/ +/g, " ")
+            .replace(/\n{2,}/g, "\n")
+            .trim();
 
-      // Numero/Número
-      m = l.match(/^(?:numero|n(?:u|ú)mero)\s*[:\-]?\s*(.*)/i);
-      if (m && m[1]) {
-        dados.numero = m[1].trim();
-        continue;
-      }
-
-      // Bairro
-      m = l.match(/bairro\s*[:\-]?\s*(.*)/i);
-      if (m && m[1]) {
-        dados.bairro = m[1].trim();
-        continue;
-      }
-
-      // Taxa de Entrega
-      m = l.match(/taxa de entrega\s*[:\-]?\s*(.*)/i);
-      if (m && m[1]) {
-        dados.taxaEntrega = m[1].trim();
-        continue;
-      }
-
-      // Forma de Pagamento
-      m = l.match(/forma de pagamento\s*[:\-]?\s*(.*)/i);
-      if (m && m[1]) {
-        dados.formaPagamento = m[1].trim();
-        continue;
-      }
-
-      // TOTAL
-      m = l.match(/total(?: do pedido)?\s*[:\-]?\s*(.*)/i);
-      if (m && m[1]) {
-        dados.total = m[1].trim();
-        continue;
-      }
-    }
-
-    // Itens: localizar bloco 'ITENS DO PEDIDO' e agrupar por linhas iniciando com número
-    const startIdx = lines.findIndex((ln) => /itens do pedido/i.test(ln));
-    let blocoItensEncontrado = false;
-    if (startIdx >= 0) {
-      blocoItensEncontrado = true;
-      // construir bloco até encontrar linha que contenha 'TOTAL' ou linha longa de traços
-      let endIdx = lines
-        .slice(startIdx + 1)
-        .findIndex((ln) => /(^-{3,}|^total\b)/i);
-      if (endIdx === -1) endIdx = lines.length - (startIdx + 1);
-      endIdx = startIdx + 1 + endIdx;
-      const bloco = lines
-        .slice(startIdx + 1, endIdx + 1)
-        .filter((l) => l !== "");
-
-      // Parseia itens por linhas que começam com número (ex: '1. Space Salad')
-      let currentItem = null;
-      const pushCurrent = () => {
-        if (currentItem) {
-          // trim campos
-          currentItem.nome = (currentItem.nome || "").trim();
-          currentItem.adicionais = currentItem.adicionais.map((s) => s.trim());
-          currentItem.observacoes = currentItem.observacoes.map((s) =>
-            s.trim()
-          );
-          dados.itens.push(currentItem);
-          currentItem = null;
-        }
-      };
-
-      bloco.forEach((ln) => {
-        // item numerado
-        const mItem = ln.match(/^\s*(\d+)\.\s*(.*)/);
-        if (mItem) {
-          // novo item
-          pushCurrent();
-          currentItem = {
-            nome: mItem[2].trim(),
-            adicionais: [],
-            observacoes: [],
+          const dados = {
+            cliente: null,
+            tipoServico: null,
+            endereco: null,
+            numero: null,
+            bairro: null,
+            taxaEntrega: null,
+            formaPagamento: null,
+            total: null,
+            itens: [],
           };
-          return;
-        }
 
-        // linhas que indicam adicionais ou obs
-        const mObs = ln.match(/(?:obs|observa[cç][aã]o)\s*[:\-]?\s*(.*)/i);
-        if (mObs && currentItem) {
-          currentItem.observacoes.push(mObs[1].trim());
-          return;
-        }
+        const lines = textoLimpo.split(/\n/).map((l) => l.trim());
+          // objeto por linha com versão normalizada (remove emojis/bullets no início)
+          const linesObjs = lines.map((raw) => ({
+            raw,
+            norm: raw.replace(/^[^A-Za-z0-9À-ÿ]+/g, "").replace(/ +/g, " ").trim(),
+          }));
 
-        // adicionais listados com '-' ou 'Adicionais' linha
-        if (/^\s*-\s*/.test(ln) && currentItem) {
-          currentItem.adicionais.push(ln.replace(/^-\s*/, "").trim());
-          return;
-        }
-
-        // linha que diz apenas 'Adicionais:' - ignorar
-        if (/adicionais?[:\-]?$/i.test(ln)) return;
-
-        // Caso: nome do item sem número (p.ex. quando o texto tem apenas o nome)
-        if (!/^\d+\./.test(ln) && currentItem && !/^\-+/.test(ln)) {
-          // pode ser continuação do nome ou detalhe; se o item ainda não tem observações/adicionais, considere como parte do nome
-          if (
-            currentItem.adicionais.length === 0 &&
-            currentItem.observacoes.length === 0
-          ) {
-            currentItem.nome += " " + ln;
-          } else {
-            // se já tem detalhes, trata como observação
-            currentItem.observacoes.push(ln);
+          if (DEBUG) {
+            console.groupCollapsed("parsePedido debug");
+            console.log("textoLimpo:", textoLimpo);
+            console.log("linesObjs:", linesObjs);
           }
-          return;
-        }
-      });
-      pushCurrent();
-    }
 
-    // Cleanup final: normalizar placeholders
-    Object.keys(dados).forEach((k) => {
-      if (typeof dados[k] === "string") {
-        const v = dados[k].trim();
-        if (/^(-+|n\/?n|sem\b|s\.n\.?|nao informado)$/i.test(v))
-          dados[k] = null;
-      }
-    });
+          const isFieldLine = (ln) => {
+            return /\b(Cliente|Tipo de Servi[cç]o|Servi[cç]o|Endere[cç]o|N(?:u|ú)mero|Numero|Bairro|Forma de Pagamento|Taxa de Entrega|ITENS DO PEDIDO|TOTAL)\b/i.test(
+              ln.norm
+            );
+          };
 
-    return {
-      dados: dados,
-      blocoItensEncontrado: blocoItensEncontrado,
-    };
-  }
+          // Procura campos linha a linha usando versão normalizada
+          for (let i = 0; i < linesObjs.length; i++) {
+            const ln = linesObjs[i];
+            if (!ln.raw) continue;
+            const n = ln.norm;
 
-  /**
-   * Função que cria o HTML do cupom.
-   */
-  function renderCupom(dados, blocoItensEncontrado) {
-    // A função agora recebe a informação extra
-    const toFloat = (valorStr) => {
-      if (!valorStr) return 0;
-      let s = String(valorStr)
-        .replace(/[^0-9.,-]/g, "")
-        .trim();
-      if (!s) return 0;
-      const hasComma = s.includes(",");
-      const hasDot = s.includes(".");
-      if (hasComma && hasDot) {
-        if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
-          // vírgula é decimal
-          s = s.replace(/\./g, "").replace(/,/, ".");
-        } else {
-          // ponto é decimal
-          s = s.replace(/,/g, "");
-        }
-      } else if (hasComma) {
-        // só vírgula presente => vírgula decimal
-        s = s.replace(/\./g, "").replace(/,/, ".");
-      } else {
-        // só ponto ou nenhum
-        s = s.replace(/,/g, "");
-      }
-      const n = parseFloat(s);
-      return isNaN(n) ? 0 : n;
-    };
+            // Cliente
+            let m = n.match(/^cliente\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.cliente = m[1].trim() || ln.raw.replace(/^[^A-Za-z0-9À-ÿ]+/g, "").replace(/^cliente\s*[:\-]?\s*/i, "").trim();
+              continue;
+            }
 
-    const valorTotal = toFloat(dados.total);
-    const valorTaxa = toFloat(dados.taxaEntrega);
-    const subtotal = valorTotal > 0 ? valorTotal - valorTaxa : 0;
+            // Tipo de Serviço / Serviço
+            m = n.match(/^(?:tipo de servi[cç]o|servi[cç]o)\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.tipoServico = m[1].trim();
+              continue;
+            }
 
-    const dataAtual = new Date();
-    const dataFormatada = dataAtual.toLocaleDateString("pt-BR");
-    const horaFormatada = dataAtual.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+            // Endereço (pode ser multi-linha)
+            m = n.match(/^endere[cç]o\s*[:\-]?\s*(.*)/i);
+            if (m) {
+              let addr = (m[1] || "").trim();
+              let j = i + 1;
+              while ((addr === "" || !addr) && j < linesObjs.length && !isFieldLine(linesObjs[j])) {
+                if (linesObjs[j].raw) addr = (addr ? addr + ", " : "") + linesObjs[j].raw;
+                j++;
+              }
+              if (!addr) {
+                j = i + 1;
+                while (j < linesObjs.length && !isFieldLine(linesObjs[j])) {
+                  if (linesObjs[j].raw) addr = (addr ? addr + ", " : "") + linesObjs[j].raw;
+                  j++;
+                }
+              }
+              dados.endereco = addr ? addr.replace(/,\s*,/g, ", ").trim() : null;
+              continue;
+            }
 
-    let itensHtml = "";
+            // Numero/Número
+            m = n.match(/^(?:numero|n(?:u|ú)mero)\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.numero = m[1].trim();
+              continue;
+            }
+
+            // Bairro
+            m = n.match(/^bairro\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.bairro = m[1].trim();
+              continue;
+            }
+
+            // Taxa de Entrega
+            m = n.match(/^taxa de entrega\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.taxaEntrega = m[1].trim();
+              continue;
+            }
+
+            // Forma de Pagamento
+            m = n.match(/^forma de pagamento\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.formaPagamento = m[1].trim();
+              continue;
+            }
+
+            // TOTAL
+            m = n.match(/^total(?: do pedido)?\s*[:\-]?\s*(.*)/i);
+            if (m && m[1]) {
+              dados.total = m[1].trim();
+              continue;
+            }
+          }
+
+          // Itens: localizar bloco 'ITENS DO PEDIDO' e agrupar por linhas iniciando com número
+          let startIdx = linesObjs.findIndex((ln) => /itens do pedido/i.test(ln.norm));
+          let blocoItensEncontrado = false;
+          if (startIdx >= 0) {
+            blocoItensEncontrado = true;
+            let endIdx = linesObjs.slice(startIdx + 1).findIndex((ln) => /(^-{3,}|^total\b)/i.test(ln.norm));
+            if (endIdx === -1) endIdx = linesObjs.length - (startIdx + 1);
+            endIdx = startIdx + 1 + endIdx;
+            const bloco = linesObjs.slice(startIdx + 1, endIdx + 1).map((o) => o.raw).filter((l) => l !== "");
+
+            // Parseia itens por linhas que começam com número (ex: '1. Space Salad')
+            let currentItem = null;
+            const pushCurrent = () => {
+              if (currentItem) {
+                currentItem.nome = (currentItem.nome || "").trim();
+                currentItem.adicionais = (currentItem.adicionais || []).map((s) => s.trim());
+                currentItem.observacoes = (currentItem.observacoes || []).map((s) => s.trim());
+                dados.itens.push(currentItem);
+                currentItem = null;
+              }
+            };
+
+            bloco.forEach((ln) => {
+              const mItem = ln.match(/^\s*(\d+)\.\s*(.*)/);
+              if (mItem) {
+                pushCurrent();
+                currentItem = { nome: mItem[2].trim(), adicionais: [], observacoes: [] };
+                return;
+              }
+              const mObs = ln.match(/(?:obs|observa[cç][aã]o)\s*[:\-]?\s*(.*)/i);
+              if (mObs && currentItem) {
+                currentItem.observacoes.push(mObs[1].trim());
+                return;
+              }
+              if (/^\s*-\s*/.test(ln) && currentItem) {
+                currentItem.adicionais.push(ln.replace(/^\-\s*/, "").trim());
+                return;
+              }
+              if (/adicionais?[:\-]?$/i.test(ln)) return;
+              if (!/^\d+\./.test(ln) && currentItem && !/^\-+/.test(ln)) {
+                if ((currentItem.adicionais || []).length === 0 && (currentItem.observacoes || []).length === 0) {
+                  currentItem.nome += ' ' + ln;
+                } else {
+                  currentItem.observacoes.push(ln);
+                }
+                return;
+              }
+            });
+            pushCurrent();
+          } else {
+            // Fallback: se não tiver cabeçalho, tenta encontrar listas numeradas em todo o texto
+            const numberedIdxs = linesObjs.map((o) => o.raw).map((r, idx) => ({ r, idx })).filter((o) => /^\s*\d+\./.test(o.r));
+            if (numberedIdxs.length > 0) {
+              blocoItensEncontrado = true;
+              let currentItem = null;
+              const pushCurrent = () => {
+                if (currentItem) {
+                  currentItem.nome = (currentItem.nome || "").trim();
+                  currentItem.adicionais = (currentItem.adicionais || []).map((s) => s.trim());
+                  currentItem.observacoes = (currentItem.observacoes || []).map((s) => s.trim());
+                  dados.itens.push(currentItem);
+                  currentItem = null;
+                }
+              };
+              numberedIdxs.forEach((entry) => {
+                const ln = entry.r;
+                const mItem = ln.match(/^\s*(\d+)\.\s*(.*)/);
+                if (mItem) {
+                  pushCurrent();
+                  currentItem = { nome: mItem[2].trim(), adicionais: [], observacoes: [] };
+                }
+              });
+              pushCurrent();
+            }
+          }
+
+          // Se não conseguiu extrair TOTAL, procura por padrão de moeda no texto
+          if (!dados.total) {
+            const moeda = textoLimpo.match(/R\$\s*[0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})/i) || textoLimpo.match(/[0-9]+[.,][0-9]{2}/);
+            if (moeda) dados.total = moeda[0].trim();
+          }
+
+          if (DEBUG) {
+            console.log("campos extraidos:", {
+              cliente: dados.cliente,
+              tipoServico: dados.tipoServico,
+              endereco: dados.endereco,
+              numero: dados.numero,
+              bairro: dados.bairro,
+              taxaEntrega: dados.taxaEntrega,
+              formaPagamento: dados.formaPagamento,
+              total: dados.total,
+            });
+            console.log("itens extraidos:", dados.itens);
+            console.groupEnd();
+          }
+
+          // Cleanup final: normalizar placeholders
+          Object.keys(dados).forEach((k) => {
+            if (typeof dados[k] === "string") {
+              const v = dados[k].trim();
+              if (/^(-+|n\/?n|sem\b|s\.n\.?|nao informado)$/i.test(v)) dados[k] = null;
+            }
+          });
+
+          return {
+            dados: dados,
+            blocoItensEncontrado: blocoItensEncontrado,
+          };
     dados.itens.forEach((item) => {
       itensHtml += `
         <div class="cupom-item">
